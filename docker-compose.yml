@@ -8,7 +8,7 @@ services:
     build:
       context: .
     ports:
-      - ${APP_PORT}:${APP_PORT}
+      - 9090:9090
     networks:
       - api-ktor
     depends_on:
@@ -16,7 +16,7 @@ services:
     environment:
       DB_HOST: postgres:5432
     env_file:
-      - variables.env
+      - .env
 
   postgres:
     image: library/postgres:12.4-alpine
@@ -27,3 +27,5 @@ services:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASS}
       POSTGRES_DB: ${DB_NAME}
+    env_file:
+      - .env

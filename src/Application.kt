@@ -1,5 +1,6 @@
 package br.com.tagliaferrodev.ktor.rest
 
+import br.com.tagliaferrodev.ktor.rest.config.configModule
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -10,6 +11,12 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.koin.core.logger.PrintLogger
+import org.koin.ktor.ext.Koin
+import org.koin.ktor.ext.get
+import javax.sql.DataSource
 
 fun main() {
     val port = (System.getenv("SERVER_PORT") ?: "9090").toInt()
@@ -19,10 +26,10 @@ fun main() {
 object MainApp {
 
     fun start(port: Int) = embeddedServer(
-            factory = Netty,
-            port = port,
-            module = Application::module,
-            watchPaths = listOf("src", "resources")
+        factory = Netty,
+        port = port,
+        module = Application::module,
+        watchPaths = listOf("br.com.tagliaferrodev.ktor.rest")
     ).start(wait = true)
 }
 
@@ -48,6 +55,14 @@ fun Application.module() {
         }
     }
 
+    install(Koin) {
+        val modules = mutableListOf(
+            configModule
+        )
+        modules(modules)
+        logger(PrintLogger())
+    }
+
     routing {
         get("/") {
             call.respondText("HELLO WORLD!", contentType = ContentType.Text.Plain)
@@ -67,8 +82,16 @@ fun Application.module() {
             call.respond(mapOf("hello" to "world"))
         }
     }
+
+    environment.monitor.subscribe(ApplicationStarted) {
+        startDb(get())
+    }
 }
 
 class AuthenticationException : RuntimeException()
 class AuthorizationException : RuntimeException()
 
+private fun startDb(dataSource: DataSource) {
+    Flyway.configure().dataSource(dataSource).load().migrate()
+    Database.connect(dataSource)
+}
