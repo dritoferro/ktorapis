@@ -1,5 +1,6 @@
 package br.com.tagliaferrodev.ktor.rest
 
+import br.com.tagliaferrodev.ktor.rest.config.configModule
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -8,19 +9,39 @@ import io.ktor.http.*
 import io.ktor.jackson.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.koin.core.logger.PrintLogger
+import org.koin.ktor.ext.Koin
+import org.koin.ktor.ext.get
+import javax.sql.DataSource
 
-fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
+fun main() {
+    val port = (System.getenv("SERVER_PORT") ?: "9090").toInt()
+    MainApp.start(port)
+}
 
-@Suppress("unused") // Referenced in application.conf
-@kotlin.jvm.JvmOverloads
-fun Application.module(testing: Boolean = false) {
+object MainApp {
+
+    fun start(port: Int) = embeddedServer(
+        factory = Netty,
+        port = port,
+        module = Application::module,
+        watchPaths = listOf("br.com.tagliaferrodev.ktor.rest")
+    ).start(wait = true)
+}
+
+fun Application.module() {
     install(CORS) {
         method(HttpMethod.Options)
         method(HttpMethod.Put)
         method(HttpMethod.Delete)
-        method(HttpMethod.Patch)
+        method(HttpMethod.Get)
+        method(HttpMethod.Post)
         header(HttpHeaders.Authorization)
-        header("MyCustomHeader")
+//        header("MyCustomHeader")
         allowCredentials = true
         anyHost() // @TODO: Don't do this in production if possible. Try to limit it.
     }
@@ -32,6 +53,14 @@ fun Application.module(testing: Boolean = false) {
         jackson {
             enable(SerializationFeature.INDENT_OUTPUT)
         }
+    }
+
+    install(Koin) {
+        val modules = mutableListOf(
+            configModule
+        )
+        modules(modules)
+        logger(PrintLogger())
     }
 
     routing {
@@ -53,8 +82,16 @@ fun Application.module(testing: Boolean = false) {
             call.respond(mapOf("hello" to "world"))
         }
     }
+
+    environment.monitor.subscribe(ApplicationStarted) {
+        startDb(get())
+    }
 }
 
 class AuthenticationException : RuntimeException()
 class AuthorizationException : RuntimeException()
 
+private fun startDb(dataSource: DataSource) {
+    Flyway.configure().dataSource(dataSource).load().migrate()
+    Database.connect(dataSource)
+}
