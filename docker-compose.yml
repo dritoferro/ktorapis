@@ -1,0 +1,29 @@
+version: '3.7'
+
+networks:
+  api-ktor:
+
+services:
+  ktor-app:
+    build:
+      context: .
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    networks:
+      - api-ktor
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres:5432
+    env_file:
+      - variables.env
+
+  postgres:
+    image: library/postgres:12.4-alpine
+    ports:
+      - 5432:5432
+    networks:
+      - api-ktor
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASS}
+      POSTGRES_DB: ${DB_NAME}
