@@ -9,6 +9,7 @@ services:
       context: .
     ports:
       - 9090:9090
+      - 5005:5005
     networks:
       - api-ktor
     depends_on:

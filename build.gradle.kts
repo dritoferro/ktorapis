@@ -30,7 +30,6 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("io.ktor:ktor-server-core:$ktor_version")
     implementation("io.ktor:ktor-server-host-common:$ktor_version")
-    implementation("io.ktor:ktor-jackson:$ktor_version")
 
     // Auth
     implementation("io.ktor:ktor-auth:$ktor_version")
@@ -44,6 +43,10 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:0.27.1")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.27.1")
     implementation("org.koin:koin-ktor:2.1.6")
+
+    // Serialization
+    implementation("io.ktor:ktor-jackson:$ktor_version")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.11.2")
 
     // Tests
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")

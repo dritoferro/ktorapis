@@ -2,10 +2,8 @@ package br.com.tagliaferrodev.ktor.rest.repository.impl
 
 import br.com.tagliaferrodev.ktor.rest.products.Product
 import br.com.tagliaferrodev.ktor.rest.repository.ProductRepository
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.`java-time`.datetime
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
@@ -44,19 +42,40 @@ class ProductRepositoryAdapter : ProductRepository {
     }
 
     override fun update(product: Product) {
-        TODO("Not yet implemented")
+        val result = transaction {
+            ProductTable.update({ ProductTable.id eq product.id }) {
+                it[name] = product.name
+                it[value] = product.value
+                it[description] = product.description
+                it[arrivedAt] = product.arrivedAt
+            }
+        }
+
+        val noAffectedRow = result != 1
+
+        if (noAffectedRow) {
+            throw RuntimeException("Cannot update this product: $product")
+        }
     }
 
     override fun findById(id: UUID): Product? {
-        TODO("Not yet implemented")
+        return transaction {
+            ProductTable.select {
+                ProductTable.id eq id
+            }.firstOrNull()?.let { ProductTable.toProduct(it) }
+        }
     }
 
     override fun findAll(): List<Product> {
-        TODO("Not yet implemented")
+        return transaction {
+            ProductTable.selectAll().map { ProductTable.toProduct(it) }
+        }
     }
 
     override fun delete(id: UUID) {
-        TODO("Not yet implemented")
+        transaction {
+            ProductTable.deleteWhere { ProductTable.id eq id }
+        }
     }
 
 }

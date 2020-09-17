@@ -8,10 +8,10 @@ import javax.sql.DataSource
 
 val configModule = module {
     single { EnvironmentConfig(ConfigFactory.load()) }
+    single { ObjectMapperProvider.provide() }
     single<DataSource> {
         with(get<EnvironmentConfig>()) {
             DatasourceProvider.provide(dbUrl, dbUser, dbPass)
         }
     }
-    single { ObjectMapperProvider.provide() }
 }

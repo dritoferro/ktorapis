@@ -8,6 +8,6 @@ data class Product(
     val name: String,
     val value: Double,
     val description: String? = null,
-    val arrivedAt: LocalDateTime? = null
+    val arrivedAt: LocalDateTime? = LocalDateTime.now()
 ) {
 }

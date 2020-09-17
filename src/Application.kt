@@ -1,8 +1,8 @@
 package br.com.tagliaferrodev.ktor.rest
 
 import br.com.tagliaferrodev.ktor.rest.config.configModule
+import br.com.tagliaferrodev.ktor.rest.products.product
 import br.com.tagliaferrodev.ktor.rest.products.productModule
-import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.features.*
@@ -35,6 +35,15 @@ object MainApp {
 }
 
 fun Application.module() {
+    install(Koin) {
+        val modules = mutableListOf(
+            configModule,
+            productModule
+        )
+        modules(modules)
+        logger(PrintLogger())
+    }
+
     install(CORS) {
         method(HttpMethod.Options)
         method(HttpMethod.Put)
@@ -51,18 +60,17 @@ fun Application.module() {
     }
 
     install(ContentNegotiation) {
-        jackson {
-            enable(SerializationFeature.INDENT_OUTPUT)
-        }
+        register(ContentType.Application.Json, JacksonConverter(get()))
     }
 
-    install(Koin) {
-        val modules = mutableListOf(
-            configModule,
-            productModule
-        )
-        modules(modules)
-        logger(PrintLogger())
+    install(StatusPages) {
+        exception<AuthenticationException> { cause ->
+            call.respond(HttpStatusCode.Unauthorized)
+        }
+        exception<AuthorizationException> { cause ->
+            call.respond(HttpStatusCode.Forbidden)
+        }
+
     }
 
     routing {
@@ -70,19 +78,11 @@ fun Application.module() {
             call.respondText("HELLO WORLD!", contentType = ContentType.Text.Plain)
         }
 
-        install(StatusPages) {
-            exception<AuthenticationException> { cause ->
-                call.respond(HttpStatusCode.Unauthorized)
-            }
-            exception<AuthorizationException> { cause ->
-                call.respond(HttpStatusCode.Forbidden)
-            }
-
-        }
-
         get("/json/jackson") {
             call.respond(mapOf("hello" to "world"))
         }
+
+        product(get())
     }
 
     environment.monitor.subscribe(ApplicationStarted) {
