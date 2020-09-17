@@ -1,6 +1,7 @@
 package br.com.tagliaferrodev.ktor.rest
 
 import br.com.tagliaferrodev.ktor.rest.config.configModule
+import br.com.tagliaferrodev.ktor.rest.products.productModule
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -57,7 +58,8 @@ fun Application.module() {
 
     install(Koin) {
         val modules = mutableListOf(
-            configModule
+            configModule,
+            productModule
         )
         modules(modules)
         logger(PrintLogger())
