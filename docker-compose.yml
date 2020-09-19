@@ -25,8 +25,30 @@ services:
       - 5432:5432
     networks:
       - api-ktor
+    volumes:
+      - ./db-init:/docker-entrypoint-initdb.d:ro
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASS}
-      POSTGRES_DB: ${DB_NAME}
     env_file:
       - .env
+
+  keycloak:
+    image: jboss/keycloak
+    ports:
+      - 1080:8080
+    networks:
+      - api-ktor
+    depends_on:
+      - postgres
+    volumes:
+      - ./keycloak-setup:/keycloak-setup
+    environment:
+      KEYCLOAK_USER: ${KEYCLOAK_USER}
+      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASS}
+      DB_VENDOR: postgres
+      DB_ADDR: postgres:5432
+      DB_DATABASE: ${KEYCLOAK_DB_NAME}
+      DB_USER: ${KEYCLOAK_DB_USER}
+      DB_PASSWORD: ${KEYCLOAK_DB_PASS}
+      CLIENT_USERNAME: testclient
+      CLIENT_PASSWORD: test123
